@@ -262,9 +262,10 @@ const Records = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-background rounded-lg border shadow-lg"
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] w-full max-w-lg bg-background rounded-lg border shadow-lg"
+              style={{ maxHeight: '90vh' }}
             >
-              <div className="p-6">
+              <div className="max-h-[90vh] overflow-y-auto p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold">Agregar Registro</h2>
                   <button
