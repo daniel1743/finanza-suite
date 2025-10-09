@@ -20,6 +20,18 @@ const Records = () => {
   const [newUser, setNewUser] = useState('');
   const [newNecessity, setNewNecessity] = useState('');
 
+  // Bloquear scroll cuando el modal está abierto
+  useEffect(() => {
+    if (isDialogOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isDialogOpen]);
+
   const [filters, setFilters] = useState({
     searchTerm: '',
     category: 'all',
@@ -152,27 +164,35 @@ const Records = () => {
               </div>
               <div className="grid gap-2">
                 <Label>Categoría</Label>
-                <Select value={filters.category} onValueChange={(v) => setFilters({...filters, category: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {categories.expense.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    {categories.income.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={filters.category}
+                  onChange={(e) => setFilters({...filters, category: e.target.value})}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="all">Todas</option>
+                  {categories.expense.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.income.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+
                 <Label>Necesidad</Label>
-                <Select value={filters.necessity} onValueChange={(v) => setFilters({...filters, necessity: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {necessityLevels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={filters.necessity}
+                  onChange={(e) => setFilters({...filters, necessity: e.target.value})}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="all">Todas</option>
+                  {necessityLevels.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+
                 <Label>Persona</Label>
-                <Select value={filters.person} onValueChange={(v) => setFilters({...filters, person: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {users.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={filters.person}
+                  onChange={(e) => setFilters({...filters, person: e.target.value})}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="all">Todas</option>
+                  {users.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
                 <div className="grid grid-cols-2 gap-2">
                   <div><Label>Desde</Label><Input type="date" value={filters.startDate} onChange={e => setFilters({...filters, startDate: e.target.value})} /></div>
                   <div><Label>Hasta</Label><Input type="date" value={filters.endDate} onChange={e => setFilters({...filters, endDate: e.target.value})} /></div>
