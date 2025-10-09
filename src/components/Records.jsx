@@ -15,9 +15,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 const Records = () => {
   const { transactions, addTransaction, deleteTransaction, categories, addCategory, users, addUser, necessityLevels, addNecessityLevel } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isNewCategoryOpen, setNewCategoryOpen] = useState(false);
-  const [isNewUserOpen, setNewUserOpen] = useState(false);
-  const [isNewNecessityOpen, setNewNecessityOpen] = useState(false);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [showNewUserInput, setShowNewUserInput] = useState(false);
+  const [showNewNecessityInput, setShowNewNecessityInput] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [newUser, setNewUser] = useState('');
   const [newNecessity, setNewNecessity] = useState('');
@@ -53,6 +53,7 @@ const Records = () => {
     addCategory(newCategory, formData.type);
     setFormData({...formData, category: newCategory});
     setNewCategory('');
+    setShowNewCategoryInput(false);
     toast({ title: "¡Éxito!", description: `Categoría "${newCategory}" agregada` });
   }
 
@@ -61,6 +62,7 @@ const Records = () => {
     addUser(newUser);
     setFormData({...formData, person: newUser});
     setNewUser('');
+    setShowNewUserInput(false);
     toast({ title: "¡Éxito!", description: `Persona "${newUser}" agregada` });
   }
 
@@ -69,6 +71,7 @@ const Records = () => {
     addNecessityLevel(newNecessity);
     setFormData({...formData, necessity: newNecessity});
     setNewNecessity('');
+    setShowNewNecessityInput(false);
     toast({ title: "¡Éxito!", description: `Nivel "${newNecessity}" agregado` });
   }
 
@@ -251,119 +254,128 @@ const Records = () => {
 
             <div className="space-y-2">
               <Label>Categoría</Label>
-              <div className="flex gap-2">
-                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                  <SelectTrigger className="flex-grow">
-                    <SelectValue placeholder="Selecciona una categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories[formData.type].map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Popover open={isNewCategoryOpen} onOpenChange={setNewCategoryOpen}>
-                  <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Nueva Categoría</h4>
-                      <div className="flex gap-2">
-                        <Input
-                          value={newCategory}
-                          onChange={e => setNewCategory(e.target.value)}
-                          placeholder="Ej: Viajes"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddCategory();
-                              setNewCategoryOpen(false);
-                            }
-                          }}
-                        />
-                        <Button type="button" onClick={() => { handleAddCategory(); setNewCategoryOpen(false); }}>Agregar</Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {!showNewCategoryInput ? (
+                <div className="flex gap-2">
+                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                    <SelectTrigger className="flex-grow">
+                      <SelectValue placeholder="Selecciona una categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories[formData.type].map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewCategoryInput(true)}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={newCategory}
+                    onChange={e => setNewCategory(e.target.value)}
+                    placeholder="Ej: Viajes"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCategory();
+                      }
+                      if (e.key === 'Escape') {
+                        setShowNewCategoryInput(false);
+                        setNewCategory('');
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleAddCategory}>Agregar</Button>
+                  <Button type="button" variant="outline" onClick={() => { setShowNewCategoryInput(false); setNewCategory(''); }}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label>Persona</Label>
-              <div className="flex gap-2">
-                <Select value={formData.person} onValueChange={(value) => setFormData({ ...formData, person: value })}>
-                  <SelectTrigger className="flex-grow"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {users.map(user => <SelectItem key={user} value={user}>{user}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Popover open={isNewUserOpen} onOpenChange={setNewUserOpen}>
-                  <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" size="icon"><UserPlus className="w-4 h-4" /></Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Añadir Persona</h4>
-                      <div className="flex gap-2">
-                        <Input
-                          value={newUser}
-                          onChange={e => setNewUser(e.target.value)}
-                          placeholder="Ej: Jane Doe"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddUser();
-                              setNewUserOpen(false);
-                            }
-                          }}
-                        />
-                        <Button type="button" onClick={() => { handleAddUser(); setNewUserOpen(false); }}>Agregar</Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {!showNewUserInput ? (
+                <div className="flex gap-2">
+                  <Select value={formData.person} onValueChange={(value) => setFormData({ ...formData, person: value })}>
+                    <SelectTrigger className="flex-grow"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {users.map(user => <SelectItem key={user} value={user}>{user}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewUserInput(true)}>
+                    <UserPlus className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={newUser}
+                    onChange={e => setNewUser(e.target.value)}
+                    placeholder="Ej: Jane Doe"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddUser();
+                      }
+                      if (e.key === 'Escape') {
+                        setShowNewUserInput(false);
+                        setNewUser('');
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleAddUser}>Agregar</Button>
+                  <Button type="button" variant="outline" onClick={() => { setShowNewUserInput(false); setNewUser(''); }}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label>Nivel de Necesidad</Label>
-              <div className="flex gap-2">
-                <Select value={formData.necessity} onValueChange={(value) => setFormData({ ...formData, necessity: value })}>
-                  <SelectTrigger className="flex-grow">
-                    <SelectValue placeholder="Selecciona nivel de necesidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {necessityLevels.map(level => <SelectItem key={level} value={level}>{level}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Popover open={isNewNecessityOpen} onOpenChange={setNewNecessityOpen}>
-                  <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Nueva Necesidad</h4>
-                      <div className="flex gap-2">
-                        <Input
-                          value={newNecessity}
-                          onChange={e => setNewNecessity(e.target.value)}
-                          placeholder="Ej: Muy necesario"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddNecessity();
-                              setNewNecessityOpen(false);
-                            }
-                          }}
-                        />
-                        <Button type="button" onClick={() => { handleAddNecessity(); setNewNecessityOpen(false); }}>Agregar</Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {!showNewNecessityInput ? (
+                <div className="flex gap-2">
+                  <Select value={formData.necessity} onValueChange={(value) => setFormData({ ...formData, necessity: value })}>
+                    <SelectTrigger className="flex-grow">
+                      <SelectValue placeholder="Selecciona nivel de necesidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {necessityLevels.map(level => <SelectItem key={level} value={level}>{level}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowNewNecessityInput(true)}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={newNecessity}
+                    onChange={e => setNewNecessity(e.target.value)}
+                    placeholder="Ej: Muy necesario"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddNecessity();
+                      }
+                      if (e.key === 'Escape') {
+                        setShowNewNecessityInput(false);
+                        setNewNecessity('');
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleAddNecessity}>Agregar</Button>
+                  <Button type="button" variant="outline" onClick={() => { setShowNewNecessityInput(false); setNewNecessity(''); }}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

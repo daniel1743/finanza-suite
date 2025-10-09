@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const FinanceContext = createContext();
 
@@ -55,10 +55,13 @@ export const FinanceProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('financeData', JSON.stringify(data));
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem('financeData', JSON.stringify(data));
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [data]);
 
-  const addTransaction = (transaction) => {
+  const addTransaction = useCallback((transaction) => {
     const newTransaction = {
       ...transaction,
       id: Date.now().toString(),
@@ -70,16 +73,16 @@ export const FinanceProvider = ({ children }) => {
       ...prev,
       transactions: [newTransaction, ...prev.transactions]
     }));
-  };
+  }, [data.users]);
 
-  const deleteTransaction = (id) => {
+  const deleteTransaction = useCallback((id) => {
     setData(prev => ({
       ...prev,
       transactions: prev.transactions.filter(t => t.id !== id)
     }));
-  };
+  }, []);
 
-  const addBudget = (budget) => {
+  const addBudget = useCallback((budget) => {
     const newBudget = {
       ...budget,
       id: Date.now().toString()
@@ -88,23 +91,23 @@ export const FinanceProvider = ({ children }) => {
       ...prev,
       budgets: [newBudget, ...prev.budgets]
     }));
-  };
+  }, []);
 
-  const updateBudget = (id, updates) => {
+  const updateBudget = useCallback((id, updates) => {
     setData(prev => ({
       ...prev,
       budgets: prev.budgets.map(b => b.id === id ? { ...b, ...updates } : b)
     }));
-  };
+  }, []);
 
-  const deleteBudget = (id) => {
+  const deleteBudget = useCallback((id) => {
     setData(prev => ({
       ...prev,
       budgets: prev.budgets.filter(b => b.id !== id)
     }));
-  };
+  }, []);
 
-  const addGoal = (goal) => {
+  const addGoal = useCallback((goal) => {
     const newGoal = {
       ...goal,
       id: Date.now().toString(),
@@ -114,23 +117,23 @@ export const FinanceProvider = ({ children }) => {
       ...prev,
       goals: [newGoal, ...prev.goals]
     }));
-  };
+  }, []);
 
-  const updateGoal = (id, updates) => {
+  const updateGoal = useCallback((id, updates) => {
     setData(prev => ({
       ...prev,
       goals: prev.goals.map(g => g.id === id ? { ...g, ...updates } : g)
     }));
-  };
+  }, []);
 
-  const deleteGoal = (id) => {
+  const deleteGoal = useCallback((id) => {
     setData(prev => ({
       ...prev,
       goals: prev.goals.filter(g => g.id !== id)
     }));
-  };
+  }, []);
 
-  const addDebt = (debt) => {
+  const addDebt = useCallback((debt) => {
     const newDebt = {
       ...debt,
       id: Date.now().toString()
@@ -139,23 +142,23 @@ export const FinanceProvider = ({ children }) => {
       ...prev,
       debts: [newDebt, ...prev.debts]
     }));
-  };
+  }, []);
 
-  const updateDebt = (id, updates) => {
+  const updateDebt = useCallback((id, updates) => {
     setData(prev => ({
       ...prev,
       debts: prev.debts.map(d => d.id === id ? { ...d, ...updates } : d)
     }));
-  };
+  }, []);
 
-  const deleteDebt = (id) => {
+  const deleteDebt = useCallback((id) => {
     setData(prev => ({
       ...prev,
       debts: prev.debts.filter(d => d.id !== id)
     }));
-  };
-  
-  const addCategory = (category, type = 'expense') => {
+  }, []);
+
+  const addCategory = useCallback((category, type = 'expense') => {
     setData(prev => {
         const newCategories = new Set([...prev.categories[type], category]);
         return {
@@ -166,23 +169,23 @@ export const FinanceProvider = ({ children }) => {
             }
         }
     });
-  }
+  }, []);
 
-  const addUser = (user) => {
+  const addUser = useCallback((user) => {
     setData(prev => ({
       ...prev,
       users: [...new Set([...prev.users, user])]
     }));
-  }
+  }, []);
 
-  const addNecessityLevel = (level) => {
+  const addNecessityLevel = useCallback((level) => {
     setData(prev => ({
       ...prev,
       necessityLevels: [...new Set([...prev.necessityLevels, level])]
     }));
-  };
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     ...data,
     addTransaction,
     deleteTransaction,
@@ -198,7 +201,7 @@ export const FinanceProvider = ({ children }) => {
     addCategory,
     addUser,
     addNecessityLevel,
-  };
+  }), [data, addTransaction, deleteTransaction, addBudget, updateBudget, deleteBudget, addGoal, updateGoal, deleteGoal, addDebt, updateDebt, deleteDebt, addCategory, addUser, addNecessityLevel]);
 
   return (
     <FinanceContext.Provider value={value}>
