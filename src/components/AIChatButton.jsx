@@ -52,9 +52,9 @@ const AIChatButton = ({ hidden }) => {
       >
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-400 shadow-lg"
+          className="rounded-full w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-400 shadow-lg"
         >
-          <Bot className="w-5 h-5" />
+          <Bot className="w-6 h-6" />
         </Button>
       </motion.div>
 
