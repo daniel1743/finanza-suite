@@ -259,13 +259,13 @@ const Records = () => {
 
             {/* Modal */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] w-full max-w-lg bg-background rounded-lg border shadow-lg"
-              style={{ maxHeight: '90vh' }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-4 md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-[60] md:w-full md:max-w-lg md:inset-auto bg-background rounded-lg border shadow-lg flex flex-col"
+              style={{ maxHeight: 'calc(100vh - 2rem)' }}
             >
-              <div className="max-h-[90vh] overflow-y-auto p-6">
+              <div className="overflow-y-auto p-4 md:p-6 flex-1">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold">Agregar Registro</h2>
                   <button
