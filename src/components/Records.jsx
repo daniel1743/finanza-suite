@@ -1,13 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, TrendingUp, TrendingDown, Trash2, User, UserPlus, PiggyBank, Landmark, Calendar, Filter, X } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -227,19 +225,48 @@ const Records = () => {
         )}
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Agregar Registro</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <AnimatePresence>
+        {isDialogOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDialogOpen(false)}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-background rounded-lg border shadow-lg"
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">Agregar Registro</h2>
+                  <button
+                    type="button"
+                    onClick={() => setIsDialogOpen(false)}
+                    className="rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Tipo</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value, category: ''})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expense">Gasto</SelectItem>
-                  <SelectItem value="income">Ingreso</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value, category: ''})}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="expense">Gasto</option>
+                <option value="income">Ingreso</option>
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -256,16 +283,16 @@ const Records = () => {
               <Label>Categoría</Label>
               {!showNewCategoryInput ? (
                 <div className="flex gap-2">
-                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                    <SelectTrigger className="flex-grow">
-                      <SelectValue placeholder="Selecciona una categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories[formData.type].map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-grow"
+                  >
+                    <option value="">Selecciona una categoría</option>
+                    {categories[formData.type].map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
                   <Button type="button" variant="outline" size="icon" onClick={() => setShowNewCategoryInput(true)}>
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -297,15 +324,21 @@ const Records = () => {
             </div>
 
             <div className="space-y-2">
+              <Label>Fecha</Label>
+              <Input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+            </div>
+
+            <div className="space-y-2">
               <Label>Persona</Label>
               {!showNewUserInput ? (
                 <div className="flex gap-2">
-                  <Select value={formData.person} onValueChange={(value) => setFormData({ ...formData, person: value })}>
-                    <SelectTrigger className="flex-grow"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {users.map(user => <SelectItem key={user} value={user}>{user}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={formData.person}
+                    onChange={(e) => setFormData({ ...formData, person: e.target.value })}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-grow"
+                  >
+                    {users.map(user => <option key={user} value={user}>{user}</option>)}
+                  </select>
                   <Button type="button" variant="outline" size="icon" onClick={() => setShowNewUserInput(true)}>
                     <UserPlus className="w-4 h-4" />
                   </Button>
@@ -340,14 +373,14 @@ const Records = () => {
               <Label>Nivel de Necesidad</Label>
               {!showNewNecessityInput ? (
                 <div className="flex gap-2">
-                  <Select value={formData.necessity} onValueChange={(value) => setFormData({ ...formData, necessity: value })}>
-                    <SelectTrigger className="flex-grow">
-                      <SelectValue placeholder="Selecciona nivel de necesidad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {necessityLevels.map(level => <SelectItem key={level} value={level}>{level}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={formData.necessity}
+                    onChange={(e) => setFormData({ ...formData, necessity: e.target.value })}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-grow"
+                  >
+                    <option value="">Selecciona nivel de necesidad</option>
+                    {necessityLevels.map(level => <option key={level} value={level}>{level}</option>)}
+                  </select>
                   <Button type="button" variant="outline" size="icon" onClick={() => setShowNewNecessityInput(true)}>
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -378,15 +411,13 @@ const Records = () => {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Fecha</Label>
-              <Input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
-            </div>
-
             <Button type="submit" className="w-full bg-gradient-to-r from-purple-500 to-pink-500">Agregar</Button>
           </form>
-        </DialogContent>
-      </Dialog>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
