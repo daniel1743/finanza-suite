@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Settings, Moon, Sun, Edit, Gem, LogIn, LogOut, Palette, ShoppingBag, User, Info, X } from 'lucide-react';
+import { Bell, Moon, Sun, Edit, Gem, LogIn, LogOut, Palette, ShoppingBag, User, Info, X, Star, AlertTriangle, Shield, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +10,64 @@ import { useToast } from '@/components/ui/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card } from '@/components/ui/card';
+import { useIsAdmin } from '@/components/admin';
+import { supabase } from '@/lib/supabase';
+
+// Componente Modal Global con Portal
+const GlobalModal = ({ isOpen, onClose, children }) => {
+  // Scroll lock
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px'; // Prevent layout shift
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-[500px] bg-background flex flex-col"
+          style={{
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            maxHeight: '90vh',
+            maxWidth: '90%',
+          }}
+        >
+          {children}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>,
+    document.body
+  );
+};
 
 // Notificaciones iniciales
 const initialNotifications = [
@@ -33,11 +93,18 @@ const initialNotifications = [
 
 const Header = ({ onMenuClick, isMobile }) => {
   const { theme, toggleTheme } = useTheme();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
+  const { isAdmin } = useIsAdmin();
+  const navigate = useNavigate();
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isProfileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isReportModalOpen, setReportModalOpen] = useState(false);
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [userName, setUserName] = useState('Usuario');
+  const [userAvatar, setUserAvatar] = useState(null);
 
   // Estado de notificaciones
   const [notifications, setNotifications] = useState(() => {
@@ -52,7 +119,7 @@ const Header = ({ onMenuClick, isMobile }) => {
     localStorage.setItem('notifications', JSON.stringify(notifications));
   }, [notifications]);
 
-  // Cargar nombre de usuario
+  // Cargar nombre de usuario y avatar
   useEffect(() => {
     const savedName = localStorage.getItem('userName');
     if (savedName) {
@@ -64,7 +131,97 @@ const Header = ({ onMenuClick, isMobile }) => {
     } else if (user?.email) {
       setUserName(user.email.split('@')[0]);
     }
+
+    // Cargar avatar
+    if (profile?.avatar_url) {
+      setUserAvatar(profile.avatar_url);
+    } else if (user?.user_metadata?.avatar_url) {
+      setUserAvatar(user.user_metadata.avatar_url);
+    }
   }, [user, profile]);
+
+  // Cerrar sesión
+  const handleLogout = async () => {
+    setProfileDropdownOpen(false);
+    const { error } = await signOut();
+    if (error) {
+      toast({ title: 'Error', description: 'No se pudo cerrar la sesión', variant: 'destructive' });
+    } else {
+      toast({ title: 'Sesión cerrada', description: 'Has cerrado sesión correctamente' });
+      navigate('/');
+    }
+  };
+
+  // Navegar a perfil
+  const handleGoToProfile = () => {
+    setProfileDropdownOpen(false);
+    // Trigger the profile view change through the parent
+    window.dispatchEvent(new CustomEvent('changeView', { detail: 'profile' }));
+  };
+
+  // Navegar a admin
+  const handleGoToAdmin = () => {
+    setProfileDropdownOpen(false);
+    navigate('/admin');
+  };
+
+  // Abrir modal de votación/calificación
+  const handleRateApp = () => {
+    setProfileDropdownOpen(false);
+    toast({
+      title: '¡Gracias por tu interés!',
+      description: 'Pronto habilitaremos la función de calificación. ¡Tu opinión es importante!',
+    });
+  };
+
+  // Abrir modal de reporte
+  const handleOpenReportModal = () => {
+    setProfileDropdownOpen(false);
+    setReportModalOpen(true);
+  };
+
+  // Enviar reporte/ticket
+  const handleSubmitReport = async () => {
+    if (!reportTitle.trim() || !reportDescription.trim()) {
+      toast({ title: 'Error', description: 'Por favor completa todos los campos', variant: 'destructive' });
+      return;
+    }
+
+    setIsSubmittingReport(true);
+    try {
+      const { error } = await supabase
+        .from('support_tickets')
+        .insert({
+          user_id: user?.id,
+          user_email: user?.email || 'anónimo',
+          user_name: userName,
+          subject: reportTitle,
+          description: reportDescription,
+          category: 'bug',
+          priority: 'normal',
+          status: 'open'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Reporte enviado',
+        description: 'Tu reporte ha sido enviado correctamente. Te responderemos pronto.'
+      });
+      setReportTitle('');
+      setReportDescription('');
+      setReportModalOpen(false);
+    } catch (error) {
+      console.error('Error enviando reporte:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo enviar el reporte. Inténtalo de nuevo.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
 
   // Abrir notificación
   const handleOpenNotification = (notification) => {
@@ -94,25 +251,17 @@ const Header = ({ onMenuClick, isMobile }) => {
     });
     setProfileMenuOpen(false);
   };
-  
-  const handleAuth = () => {
-    setIsLoggedIn(!isLoggedIn);
-    toast({
-      title: isLoggedIn ? 'Cierre de sesión exitoso' : 'Inicio de sesión exitoso',
-    });
-    setProfileMenuOpen(false);
-  };
 
   const menuItems = [
-    { label: "Editar perfil", icon: Edit, action: () => handleQuickAction("Editar perfil") },
-    { label: "Editar foto de perfil", icon: User, action: () => handleQuickAction("Editar foto de perfil") },
-    { label: "Editar foto de portada", icon: Palette, action: () => handleQuickAction("Editar foto de portada") },
-    { label: "Pagar Premium", icon: Gem, action: () => handleQuickAction("Pagar Premium") },
-    { label: "Ir a tienda", icon: ShoppingBag, action: () => handleQuickAction("Ir a tienda") },
+    { label: "Ir a Perfil", icon: User, action: handleGoToProfile },
+    ...(isAdmin ? [{ label: "Panel de Admin", icon: Shield, action: handleGoToAdmin }] : []),
+    { label: "Calificar App", icon: Star, action: handleRateApp },
+    { label: "Reportar Problema", icon: AlertTriangle, action: handleOpenReportModal },
     { label: `Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`, icon: theme === 'dark' ? Sun : Moon, action: () => { toggleTheme(); setProfileMenuOpen(false); } },
   ];
 
   return (
+    <>
     <header className="flex items-center justify-between p-4 bg-card/50 backdrop-blur-sm border-b border-border sticky top-0 z-40 h-16">
       <div className="flex items-center gap-4">
         {isMobile ? (
@@ -139,11 +288,9 @@ const Header = ({ onMenuClick, isMobile }) => {
                         </li>
                       ))}
                       <li>
-                        <button onClick={handleAuth} className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-accent transition-colors text-left">
-                          {isLoggedIn ? <LogOut className="w-5 h-5 text-red-500" /> : <LogIn className="w-5 h-5 text-green-500" />}
-                          <span className={`font-medium ${isLoggedIn ? 'text-red-500' : 'text-green-500'}`}>
-                            {isLoggedIn ? 'Cerrar Sesión' : 'Iniciar Sesión'}
-                          </span>
+                        <button onClick={handleLogout} className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-accent transition-colors text-left">
+                          <LogOut className="w-5 h-5 text-red-500" />
+                          <span className="font-medium text-red-500">Cerrar Sesión</span>
                         </button>
                       </li>
                     </ul>
@@ -216,64 +363,200 @@ const Header = ({ onMenuClick, isMobile }) => {
           </PopoverContent>
         </Popover>
 
-        {/* Modal de Notificación - Centrado con flexbox */}
-        <AnimatePresence>
-          {isNotificationModalOpen && selectedNotification && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleCloseNotification}
-              className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center"
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                onClick={(e) => e.stopPropagation()}
-                className="relative w-[calc(100%-2rem)] max-w-md bg-background rounded-xl border shadow-2xl flex flex-col"
-                style={{ maxHeight: '90vh' }}
-              >
-                {/* Header fijo */}
-                <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Bell className="w-5 h-5 text-primary" />
-                    </div>
-                    <span className="font-semibold">Notificación</span>
-                  </div>
-                  <button
-                    onClick={handleCloseNotification}
-                    className="rounded-full p-2 hover:bg-muted transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-                {/* Contenido scrolleable */}
-                <div className="overflow-y-auto p-6 flex-1">
-                  <h3 className="text-xl font-bold mb-2">{selectedNotification.title}</h3>
-                  <p className="text-muted-foreground mb-4">{selectedNotification.description}</p>
-                  <p className="text-xs text-muted-foreground/70">{selectedNotification.date}</p>
-                </div>
-                {/* Footer fijo */}
-                <div className="p-4 border-t bg-muted/30 flex-shrink-0">
-                  <Button onClick={handleCloseNotification} className="w-full bg-gradient-to-r from-purple-500 to-pink-500">
-                    Marcar como leída
-                  </Button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-           <Button variant="ghost" size="icon" onClick={() => handleQuickAction('Configuración')}>
-            <Settings className="h-5 w-5" />
-          </Button>
-        </motion.div>
+        {/* Profile Dropdown */}
+        <Popover open={isProfileDropdownOpen} onOpenChange={setProfileDropdownOpen}>
+          <PopoverTrigger asChild>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="cursor-pointer">
+              <div className="w-9 h-9 rounded-full border-2 border-primary overflow-hidden bg-primary/10 flex items-center justify-center">
+                {userAvatar ? (
+                  <img className="w-full h-full object-cover" alt="Avatar" src={userAvatar} />
+                ) : (
+                  <span className="text-primary font-semibold text-sm">
+                    {userName?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align="end">
+            {/* User Info Header */}
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full border-2 border-primary overflow-hidden bg-primary/10 flex items-center justify-center">
+                  {userAvatar ? (
+                    <img className="w-full h-full object-cover" alt="Avatar" src={userAvatar} />
+                  ) : (
+                    <span className="text-primary font-bold text-lg">
+                      {userName?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground truncate">{userName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="py-2">
+              <button
+                onClick={handleGoToProfile}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left"
+              >
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">Ir a Perfil</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+              </button>
+
+              {isAdmin && (
+                <button
+                  onClick={handleGoToAdmin}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left"
+                >
+                  <Shield className="w-4 h-4 text-indigo-500" />
+                  <span className="text-sm">Panel de Admin</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                </button>
+              )}
+
+              <div className="border-t border-border my-2" />
+
+              <button
+                onClick={handleRateApp}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left"
+              >
+                <Star className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm">Calificar App</span>
+              </button>
+
+              <button
+                onClick={handleOpenReportModal}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left"
+              >
+                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                <span className="text-sm">Reportar un Problema</span>
+              </button>
+
+              <div className="border-t border-border my-2" />
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-500/10 transition-colors text-left"
+              >
+                <LogOut className="w-4 h-4 text-red-500" />
+                <span className="text-sm text-red-500">Cerrar Sesión</span>
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </header>
+
+    {/* MODALES GLOBALES - Fuera del header usando Portal */}
+
+    {/* Modal de Notificación */}
+    <GlobalModal isOpen={isNotificationModalOpen && !!selectedNotification} onClose={handleCloseNotification}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-5 border-b border-border/50 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center">
+            <Bell className="w-5 h-5 text-primary" />
+          </div>
+          <span className="font-semibold text-lg">Notificación</span>
+        </div>
+        <button
+          onClick={handleCloseNotification}
+          className="rounded-full p-2.5 hover:bg-muted transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      {/* Contenido */}
+      <div className="overflow-y-auto p-6 flex-1">
+        <h3 className="text-xl font-bold mb-3">{selectedNotification?.title}</h3>
+        <p className="text-muted-foreground mb-4 leading-relaxed">{selectedNotification?.description}</p>
+        <p className="text-xs text-muted-foreground/70">{selectedNotification?.date}</p>
+      </div>
+      {/* Footer */}
+      <div className="p-5 border-t border-border/50 bg-muted/20 flex-shrink-0">
+        <Button
+          onClick={handleCloseNotification}
+          className="w-full min-h-[44px] bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-medium"
+        >
+          Marcar como leída
+        </Button>
+      </div>
+    </GlobalModal>
+
+    {/* Modal de Reportar Problema */}
+    <GlobalModal isOpen={isReportModalOpen} onClose={() => setReportModalOpen(false)}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-5 border-b border-border/50 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-orange-500/10 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-orange-500" />
+          </div>
+          <span className="font-semibold text-lg">Reportar un Problema</span>
+        </div>
+        <button
+          onClick={() => setReportModalOpen(false)}
+          className="rounded-full p-2.5 hover:bg-muted transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Form */}
+      <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        <div>
+          <label className="block text-sm font-medium mb-2">Título del problema</label>
+          <input
+            type="text"
+            value={reportTitle}
+            onChange={(e) => setReportTitle(e.target.value)}
+            placeholder="Ej: Error al cargar transacciones"
+            className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all min-h-[44px]"
+            maxLength={100}
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Descripción <span className="text-muted-foreground">({reportDescription.length}/500)</span>
+          </label>
+          <textarea
+            value={reportDescription}
+            onChange={(e) => setReportDescription(e.target.value.slice(0, 500))}
+            placeholder="Describe el problema con el mayor detalle posible. Incluye pasos para reproducirlo si es posible..."
+            className="w-full px-4 py-3 bg-muted border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none transition-all"
+            style={{ minHeight: '140px' }}
+            maxLength={500}
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="p-5 border-t border-border/50 bg-muted/20 flex justify-end gap-3 flex-shrink-0">
+        <Button
+          variant="outline"
+          onClick={() => setReportModalOpen(false)}
+          disabled={isSubmittingReport}
+          className="min-h-[44px] px-5"
+        >
+          Cancelar
+        </Button>
+        <Button
+          onClick={handleSubmitReport}
+          disabled={isSubmittingReport || !reportTitle.trim() || !reportDescription.trim()}
+          className="min-h-[44px] px-5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+        >
+          {isSubmittingReport ? 'Enviando...' : 'Enviar Reporte'}
+        </Button>
+      </div>
+    </GlobalModal>
+    </>
   );
 };
 

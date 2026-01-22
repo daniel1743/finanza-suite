@@ -95,21 +95,30 @@ function MainApp() {
 
         <div className="flex flex-col flex-1 w-full overflow-hidden">
           <Header isMobile={isMobile} />
-          <div ref={mainContentRef} className={`flex-grow overflow-y-auto ${isMobile ? 'pb-24' : ''}`}>
-            <main>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentView}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {renderView()}
-                </motion.div>
-              </AnimatePresence>
-            </main>
-            <Footer setCurrentView={handleSetCurrentView} />
+          {/* Contenedor scrolleable con Flexbox Sticky Footer */}
+          <div
+            ref={mainContentRef}
+            className={`flex-1 overflow-y-auto ${isMobile ? 'pb-24' : ''}`}
+          >
+            {/* Wrapper interno con min-height para sticky footer */}
+            <div className="min-h-full flex flex-col">
+              {/* Main content con flex-1 empuja el footer hacia abajo */}
+              <main className="flex-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentView}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {renderView()}
+                  </motion.div>
+                </AnimatePresence>
+              </main>
+              {/* Footer siempre al final */}
+              <Footer setCurrentView={handleSetCurrentView} />
+            </div>
           </div>
         </div>
       </div>
