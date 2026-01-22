@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import CategoryChart from '@/components/CategoryChart';
 import PersonalizedTips from '@/components/PersonalizedTips';
-import PricingPlans from '@/components/PricingPlans';
+// import PricingPlans from '@/components/PricingPlans'; // Eliminado - app 100% gratis
 
 
 const LEISURE_CATEGORIES = ['Entretenimiento', 'Ocio'];
@@ -298,7 +298,7 @@ const Dashboard = ({ setCurrentView }) => {
           </Card>
 
           <PersonalizedTips />
-          <PricingPlans />
+          {/* PricingPlans eliminado - app 100% gratis */}
       </div>
     </div>
   );

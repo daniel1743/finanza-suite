@@ -121,104 +121,110 @@ const Transactions = () => {
       <AnimatePresence>
         {isDialogOpen && (
           <>
+            {/* Overlay con flexbox para centrado */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsDialogOpen(false)}
-              className="fixed inset-0 bg-black/50 z-50"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-4 md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-[60] md:w-full md:max-w-lg md:inset-auto bg-background rounded-lg border shadow-lg flex flex-col"
-              style={{ maxHeight: 'calc(100vh - 2rem)' }}
+              className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center"
             >
-              <div className="overflow-y-auto p-4 md:p-6 flex-1">
-                <div className="flex items-center justify-between mb-4">
+              {/* Modal centrado */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-[calc(100%-2rem)] max-w-lg bg-background rounded-xl border shadow-2xl flex flex-col"
+                style={{ maxHeight: '90vh' }}
+              >
+                {/* Header fijo */}
+                <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
                   <h2 className="text-xl font-bold">Agregar Transacción</h2>
                   <button
                     type="button"
                     onClick={() => setIsDialogOpen(false)}
-                    className="rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+                    className="rounded-full p-2 hover:bg-muted transition-colors"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
+                {/* Contenido scrolleable */}
+                <div className="overflow-y-auto p-4 md:p-6 flex-1">
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Tipo</Label>
+                      <select
+                        value={formData.type}
+                        onChange={(e) => setFormData({...formData, type: e.target.value, category: ''})}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="expense">Gasto</option>
+                        <option value="income">Ingreso</option>
+                      </select>
+                    </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Tipo</Label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => setFormData({...formData, type: e.target.value, category: ''})}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      <option value="expense">Gasto</option>
-                      <option value="income">Ingreso</option>
-                    </select>
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Monto</Label>
+                      <Input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Monto</Label>
-                    <Input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} placeholder="0.00" />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Descripción</Label>
+                      <Input value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Ej: Compra de supermercado" />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Descripción</Label>
-                    <Input value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Ej: Compra de supermercado" />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Categoría</Label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="">Selecciona una categoría</option>
+                        {categories[formData.type].map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Categoría</Label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      <option value="">Selecciona una categoría</option>
-                      {categories[formData.type].map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Nivel de Necesidad</Label>
+                      <select
+                        value={formData.necessity}
+                        onChange={(e) => setFormData({...formData, necessity: e.target.value})}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="">Selecciona nivel de necesidad</option>
+                        {necessityLevels.map(level => (
+                          <option key={level} value={level}>{level}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Nivel de Necesidad</Label>
-                    <select
-                      value={formData.necessity}
-                      onChange={(e) => setFormData({...formData, necessity: e.target.value})}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      <option value="">Selecciona nivel de necesidad</option>
-                      {necessityLevels.map(level => (
-                        <option key={level} value={level}>{level}</option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Persona</Label>
+                      <select
+                        value={formData.person}
+                        onChange={(e) => setFormData({...formData, person: e.target.value})}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        {users.map(user => (
+                          <option key={user} value={user}>{user}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Persona</Label>
-                    <select
-                      value={formData.person}
-                      onChange={(e) => setFormData({...formData, person: e.target.value})}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      {users.map(user => (
-                        <option key={user} value={user}>{user}</option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Fecha</Label>
+                      <Input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Fecha</Label>
-                    <Input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
-                  </div>
-
-                  <Button type="submit" className="w-full bg-gradient-to-r from-purple-500 to-pink-500">Agregar</Button>
-                </form>
-              </div>
+                    <Button type="submit" className="w-full bg-gradient-to-r from-purple-500 to-pink-500">Agregar</Button>
+                  </form>
+                </div>
+              </motion.div>
             </motion.div>
           </>
         )}

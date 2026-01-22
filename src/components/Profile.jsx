@@ -1,16 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Edit, Gem, LogIn, LogOut, Moon, Palette, ShoppingBag, Sun, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, } from "@/components/ui/sheet";
 
 const Profile = () => {
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const { user, profile } = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [open, setOpen] = useState(false);
+  const [userName, setUserName] = useState('Usuario');
+  const [profilePhoto, setProfilePhoto] = useState('');
+  const [coverPhoto, setCoverPhoto] = useState('');
+
+  // Cargar datos del perfil
+  useEffect(() => {
+    const savedName = localStorage.getItem('userName');
+    const savedProfilePhoto = localStorage.getItem('profilePhoto');
+    const savedCoverPhoto = localStorage.getItem('coverPhoto');
+
+    if (savedName) setUserName(savedName);
+    else if (profile?.full_name) setUserName(profile.full_name);
+    else if (user?.user_metadata?.full_name) setUserName(user.user_metadata.full_name);
+    else if (user?.email) setUserName(user.email.split('@')[0]);
+
+    if (savedProfilePhoto) setProfilePhoto(savedProfilePhoto);
+    if (savedCoverPhoto) setCoverPhoto(savedCoverPhoto);
+  }, [user, profile]);
 
   const handleAction = (message) => {
     toast({
@@ -41,7 +61,11 @@ const Profile = () => {
     <div className="flex flex-col h-full bg-background">
       <div className="relative">
         <div className="h-48 md:h-64 bg-gradient-to-r from-purple-500 to-pink-500 w-full">
-          <img className="w-full h-full object-cover" alt="Paisaje montañoso con una ciudad en el valle" src="https://images.unsplash.com/photo-1545123698-ce835a354b3b" />
+          {coverPhoto ? (
+            <img className="w-full h-full object-cover" alt="Foto de portada" src={coverPhoto} />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-purple-500 to-pink-500" />
+          )}
           <div className="absolute top-4 right-4">
             <Button variant="secondary" size="icon" onClick={() => handleAction("Editar foto de portada")} className="rounded-full">
               <Camera className="w-5 h-5" />
@@ -56,8 +80,12 @@ const Profile = () => {
                 whileTap={{ scale: 0.95 }}
                 className="relative cursor-pointer"
               >
-                <div className="w-32 h-32 rounded-full border-4 border-background bg-muted overflow-hidden">
-                  <img className="w-full h-full object-cover" alt="Hombre sonriendo con fondo oscuro" src="https://images.unsplash.com/photo-1648371431385-bd73c0dd6e42" />
+                <div className="w-32 h-32 rounded-full border-4 border-background bg-gradient-to-br from-purple-500 to-pink-500 overflow-hidden flex items-center justify-center">
+                  {profilePhoto ? (
+                    <img className="w-full h-full object-cover" alt="Foto de perfil" src={profilePhoto} />
+                  ) : (
+                    <User className="w-12 h-12 text-white" />
+                  )}
                 </div>
                 <div className="absolute bottom-1 right-1 bg-secondary p-2 rounded-full border-2 border-background">
                   <Camera className="w-5 h-5" />
@@ -93,8 +121,8 @@ const Profile = () => {
         </div>
       </div>
       <div className="mt-24 text-center">
-        <h1 className="text-2xl font-bold">Yúbal M.</h1>
-        <p className="text-muted-foreground">@yubal_m</p>
+        <h1 className="text-2xl font-bold">{userName}</h1>
+        <p className="text-muted-foreground">@{userName.toLowerCase().replace(/\s+/g, '_')}</p>
       </div>
       <div className="p-4 mt-4 flex-grow">
         <div className="bg-accent/50 p-6 rounded-lg text-center">

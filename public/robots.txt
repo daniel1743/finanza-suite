@@ -1,0 +1,17 @@
+# robots.txt for Financia Suite
+# https://financiasuite.com
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://financiasuite.com/sitemap.xml
+
+# Disallow admin and private paths
+Disallow: /api/
+Disallow: /*.json$
+
+# Allow search engines to index all public pages
+Allow: /
+Allow: /app
+Allow: /login
