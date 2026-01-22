@@ -1,17 +1,71 @@
-# robots.txt for Financia Suite
+# =============================================
+# ROBOTS.TXT - Financia Suite
 # https://financiasuite.com
+# =============================================
 
+# Reglas para todos los bots
 User-agent: *
 Allow: /
+Allow: /login
+
+# Rutas privadas - NO indexar
+Disallow: /app
+Disallow: /app/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /assets/
 
 # Sitemap
 Sitemap: https://financiasuite.com/sitemap.xml
 
-# Disallow admin and private paths
-Disallow: /api/
-Disallow: /*.json$
+# =============================================
+# BOTS ESPECIFICOS
+# =============================================
 
-# Allow search engines to index all public pages
+# Google
+User-agent: Googlebot
 Allow: /
-Allow: /app
-Allow: /login
+Disallow: /app
+Disallow: /admin
+Crawl-delay: 1
+
+# Google Images
+User-agent: Googlebot-Image
+Allow: /img/
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.webp
+
+# Bing
+User-agent: Bingbot
+Allow: /
+Disallow: /app
+Crawl-delay: 2
+
+# Social Media Bots (para preview cards)
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# Bloquear bots de scraping
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /

@@ -22,7 +22,17 @@ import { FinanceProvider } from '@/contexts/FinanceContext';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import ConnectBanks from '@/components/ConnectBanks';
-import AIChatButton from '@/components/AIChatButton';
+// import AIChatButton from '@/components/AIChatButton'; // Temporalmente deshabilitado - API key expirada
+
+// Admin Panel
+import {
+  AdminRoute,
+  AdminLayout,
+  AdminDashboard,
+  NotificationsManager,
+  TicketsManager,
+  UsersManager
+} from '@/components/admin';
 
 // Componente principal de la App (Dashboard)
 function MainApp() {
@@ -105,7 +115,7 @@ function MainApp() {
       </div>
 
       <div className="fixed bottom-16 md:bottom-8 right-4 md:right-8 z-50 flex flex-col items-end gap-3">
-        <AIChatButton hidden={hidden} />
+        {/* <AIChatButton hidden={hidden} /> */}{/* Temporalmente deshabilitado */}
         <FloatingActionButton hidden={hidden} />
       </div>
       {isMobile && <BottomNav currentView={currentView} setCurrentView={handleSetCurrentView} />}
@@ -205,6 +215,48 @@ function App() {
                     <ProtectedRoute>
                       <MainApp />
                     </ProtectedRoute>
+                  }
+                />
+
+                {/* Admin Panel Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout>
+                        <AdminDashboard />
+                      </AdminLayout>
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/notifications"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout>
+                        <NotificationsManager />
+                      </AdminLayout>
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/tickets"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout>
+                        <TicketsManager />
+                      </AdminLayout>
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout>
+                        <UsersManager />
+                      </AdminLayout>
+                    </AdminRoute>
                   }
                 />
 
