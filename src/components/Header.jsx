@@ -132,13 +132,37 @@ const Header = ({ onMenuClick, isMobile }) => {
       setUserName(user.email.split('@')[0]);
     }
 
-    // Cargar avatar
-    if (profile?.avatar_url) {
+    // Cargar avatar - Prioridad: localStorage > profile > user metadata
+    const savedProfilePhoto = localStorage.getItem('profilePhoto');
+    if (savedProfilePhoto) {
+      setUserAvatar(savedProfilePhoto);
+    } else if (profile?.avatar_url) {
       setUserAvatar(profile.avatar_url);
     } else if (user?.user_metadata?.avatar_url) {
       setUserAvatar(user.user_metadata.avatar_url);
     }
   }, [user, profile]);
+
+  // Escuchar cambios en localStorage (cuando se actualiza desde Settings)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedProfilePhoto = localStorage.getItem('profilePhoto');
+      const savedName = localStorage.getItem('userName');
+      if (savedProfilePhoto) setUserAvatar(savedProfilePhoto);
+      if (savedName) setUserName(savedName);
+    };
+
+    // Escuchar evento storage (cambios desde otras pestañas)
+    window.addEventListener('storage', handleStorageChange);
+
+    // Escuchar evento personalizado (cambios desde la misma pestaña)
+    window.addEventListener('profileUpdated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleStorageChange);
+    };
+  }, []);
 
   // Cerrar sesión
   const handleLogout = async () => {
@@ -152,11 +176,11 @@ const Header = ({ onMenuClick, isMobile }) => {
     }
   };
 
-  // Navegar a perfil
+  // Navegar a configuracion de perfil (foto, nombre, banner)
   const handleGoToProfile = () => {
     setProfileDropdownOpen(false);
-    // Trigger the profile view change through the parent
-    window.dispatchEvent(new CustomEvent('changeView', { detail: 'profile' }));
+    // Ir a Settings donde esta la configuracion del perfil
+    window.dispatchEvent(new CustomEvent('changeView', { detail: 'settings' }));
   };
 
   // Navegar a admin
@@ -253,7 +277,7 @@ const Header = ({ onMenuClick, isMobile }) => {
   };
 
   const menuItems = [
-    { label: "Ir a Perfil", icon: User, action: handleGoToProfile },
+    { label: "Mi Perfil", icon: User, action: handleGoToProfile },
     ...(isAdmin ? [{ label: "Panel de Admin", icon: Shield, action: handleGoToAdmin }] : []),
     { label: "Calificar App", icon: Star, action: handleRateApp },
     { label: "Reportar Problema", icon: AlertTriangle, action: handleOpenReportModal },
@@ -406,7 +430,7 @@ const Header = ({ onMenuClick, isMobile }) => {
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left"
               >
                 <User className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">Ir a Perfil</span>
+                <span className="text-sm">Mi Perfil</span>
                 <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
               </button>
 

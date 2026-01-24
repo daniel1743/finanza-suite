@@ -36,6 +36,8 @@ const Settings = () => {
       }
       // Guardar en localStorage como fallback
       localStorage.setItem('userName', newName.trim());
+      // Notificar al Header que el perfil cambió
+      window.dispatchEvent(new Event('profileUpdated'));
       setIsEditingName(false);
       toast({ title: "Nombre actualizado", description: `Tu nombre ahora es ${newName.trim()}` });
     } catch (error) {
@@ -56,6 +58,8 @@ const Settings = () => {
         const photoUrl = event.target?.result;
         setProfilePhoto(photoUrl);
         localStorage.setItem('profilePhoto', photoUrl);
+        // Notificar al Header que la foto cambió
+        window.dispatchEvent(new Event('profileUpdated'));
         toast({ title: "Foto actualizada", description: "Tu foto de perfil ha sido cambiada" });
       };
       reader.readAsDataURL(file);

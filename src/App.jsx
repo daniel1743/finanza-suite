@@ -22,7 +22,7 @@ import { FinanceProvider } from '@/contexts/FinanceContext';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import ConnectBanks from '@/components/ConnectBanks';
-// import AIChatButton from '@/components/AIChatButton'; // Temporalmente deshabilitado - API key expirada
+import AIChatButton from '@/components/AIChatButton';
 
 // Admin Panel
 import {
@@ -52,6 +52,17 @@ function MainApp() {
       setHidden(false);
     }
   });
+
+  // Escuchar evento de cambio de vista desde Header
+  React.useEffect(() => {
+    const handleChangeView = (e) => {
+      if (e.detail) {
+        setCurrentView(e.detail);
+      }
+    };
+    window.addEventListener('changeView', handleChangeView);
+    return () => window.removeEventListener('changeView', handleChangeView);
+  }, []);
 
   const renderView = () => {
     switch (currentView) {
@@ -124,7 +135,7 @@ function MainApp() {
       </div>
 
       <div className="fixed bottom-16 md:bottom-8 right-4 md:right-8 z-50 flex flex-col items-end gap-3">
-        {/* <AIChatButton hidden={hidden} /> */}{/* Temporalmente deshabilitado */}
+        <AIChatButton hidden={hidden} />
         <FloatingActionButton hidden={hidden} />
       </div>
       {isMobile && <BottomNav currentView={currentView} setCurrentView={handleSetCurrentView} />}
@@ -145,21 +156,28 @@ function LandingPageWrapper() {
   return (
     <>
       <Helmet>
-        <title>Financia Suite - Control de Gastos y Finanzas Personales con IA</title>
-        <meta name="description" content="Toma el control de tu dinero con Financia Suite. Registra gastos, establece metas de ahorro y recibe consejos con IA. Gratis y facil de usar." />
-        <meta name="keywords" content="finanzas personales, control de gastos, app de finanzas, presupuesto, ahorro, metas financieras, gestor financiero, gratis" />
+        <title>App Control de Gastos Gratis | Financia Suite - Finanzas Personales con IA</title>
+        <meta name="description" content="App gratis para controlar gastos y administrar tu dinero. Registra ingresos, crea presupuestos, ahorra mas con consejos de IA. La mejor app de finanzas personales en espanol." />
+        <meta name="keywords" content="app control de gastos, app finanzas personales gratis, como administrar mi dinero, presupuesto personal app, app para ahorrar dinero, control de gastos gratis, gestionar finanzas, app gastos e ingresos, organizar mis finanzas, finanzas personales gratis, app de presupuesto, administrador de gastos, control financiero personal" />
 
         {/* Open Graph */}
-        <meta property="og:title" content="Financia Suite - Tu Asistente Financiero con IA" />
-        <meta property="og:description" content="La app mas simple para controlar tus finanzas. Gratis, con IA y sin complicaciones." />
+        <meta property="og:title" content="App Control de Gastos Gratis | Financia Suite" />
+        <meta property="og:description" content="La app mas simple para controlar tus gastos y ahorrar dinero. Gratis, con IA y en espanol." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://financiasuite.com" />
         <meta property="og:image" content="https://financiasuite.com/og-image.jpg" />
+        <meta property="og:locale" content="es_ES" />
+        <meta property="og:site_name" content="Financia Suite" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Financia Suite - Control de Gastos con IA" />
-        <meta name="twitter:description" content="Registra gastos, ahorra mas y recibe consejos personalizados. 100% gratis." />
+        <meta name="twitter:title" content="App Control de Gastos Gratis | Financia Suite" />
+        <meta name="twitter:description" content="Controla tus gastos, crea presupuestos y ahorra mas con IA. 100% gratis y en espanol." />
+
+        {/* Additional SEO */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Financia Suite" />
+        <link rel="canonical" href="https://financiasuite.com" />
       </Helmet>
 
       <LandingPage onGetStarted={handleGetStarted} />

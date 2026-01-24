@@ -5,22 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFinance } from '@/contexts/FinanceContext';
-import { sendMessageToGemini, getQuickSuggestions } from '@/lib/gemini';
+import { useAuth } from '@/contexts/AuthContext';
+import { sendMessageToOpenAI, getQuickSuggestions, clearChat, checkOnboarding } from '@/lib/openai';
 
 const AIChatButton = ({ hidden }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      sender: 'ai',
-      text: '¡Hola! Soy Fin, tu asistente financiero con IA. Puedo ayudarte a analizar tus gastos, crear presupuestos y alcanzar tus metas de ahorro. ¿En que te puedo ayudar hoy?'
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Obtener usuario autenticado
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Obtener datos financieros del contexto
   const { transactions, budgets, goals } = useFinance();
@@ -38,6 +39,27 @@ const AIChatButton = ({ hidden }) => {
   };
 
   useEffect(scrollToBottom, [messages]);
+
+  // Verificar onboarding cuando se abre el chat (SOLO primera vez)
+  useEffect(() => {
+    const checkUserOnboarding = async () => {
+      if (isOpen && userId && !onboardingChecked) {
+        try {
+          const result = await checkOnboarding(userId);
+          if (result.showOnboarding && result.message) {
+            // Mostrar mensaje de bienvenida solo para usuarios nuevos
+            setMessages([{ sender: 'ai', text: result.message }]);
+          }
+          setOnboardingChecked(true);
+        } catch (err) {
+          console.warn('Error checking onboarding:', err);
+          setOnboardingChecked(true);
+        }
+      }
+    };
+
+    checkUserOnboarding();
+  }, [isOpen, userId, onboardingChecked]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -58,11 +80,8 @@ const AIChatButton = ({ hidden }) => {
     setIsLoading(true);
 
     try {
-      // Obtener historial de conversacion (ultimos 10 mensajes)
-      const history = messages.slice(-10);
-
-      // Llamar a Gemini API
-      const response = await sendMessageToGemini(text, history, financeData);
+      // Llamar a OpenAI API con userId para memoria
+      const response = await sendMessageToOpenAI(text, userId, financeData);
 
       const aiMessage = { sender: 'ai', text: response };
       setMessages(prev => [...prev, aiMessage]);
@@ -71,7 +90,6 @@ const AIChatButton = ({ hidden }) => {
       console.error('Error en chat:', err);
       setError(err.message || 'Error al procesar tu mensaje. Intenta de nuevo.');
 
-      // Agregar mensaje de error
       setMessages(prev => [...prev, {
         sender: 'ai',
         text: 'Lo siento, hubo un problema al procesar tu mensaje. Por favor intenta de nuevo.',
@@ -86,13 +104,13 @@ const AIChatButton = ({ hidden }) => {
     handleSend(suggestion);
   };
 
-  const handleClearChat = () => {
-    setMessages([
-      {
-        sender: 'ai',
-        text: '¡Chat reiniciado! ¿En que puedo ayudarte?'
-      }
-    ]);
+  const handleClearChat = async () => {
+    // Limpiar historial en Supabase
+    if (userId) {
+      await clearChat(userId);
+    }
+    // Limpiar mensajes locales (sin mensaje de bienvenida)
+    setMessages([]);
     setShowSuggestions(true);
     setError(null);
   };
@@ -111,7 +129,7 @@ const AIChatButton = ({ hidden }) => {
 
   return (
     <>
-      {/* Boton flotante */}
+      {/* Botón flotante */}
       <motion.div
         className="relative"
         variants={fabVariants}
@@ -152,7 +170,7 @@ const AIChatButton = ({ hidden }) => {
                   </div>
                   <div>
                     <CardTitle className="text-base">Fin - Asistente IA</CardTitle>
-                    <p className="text-xs text-white/80">Powered by Gemini</p>
+                    <p className="text-xs text-white/80">Powered by OpenAI</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -178,6 +196,19 @@ const AIChatButton = ({ hidden }) => {
 
               {/* Mensajes */}
               <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900/50">
+                {/* Estado vacío cuando no hay mensajes */}
+                {messages.length === 0 && !isLoading && (
+                  <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-teal-400 rounded-full flex items-center justify-center mb-4">
+                      <Bot className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Soy Fin, tu copiloto financiero</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Escríbeme tu pregunta o elige una sugerencia
+                    </p>
+                  </div>
+                )}
+
                 {messages.map((msg, index) => (
                   <motion.div
                     key={index}
@@ -231,15 +262,15 @@ const AIChatButton = ({ hidden }) => {
                   </motion.div>
                 )}
 
-                {/* Sugerencias rapidas */}
-                {showSuggestions && messages.length <= 1 && (
+                {/* Sugerencias rápidas - siempre visibles cuando no hay mensajes */}
+                {showSuggestions && messages.length === 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="space-y-2 mt-4"
+                    className="space-y-2"
                   >
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Sugerencias:</p>
-                    <div className="flex flex-wrap gap-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Sugerencias:</p>
+                    <div className="flex flex-wrap justify-center gap-2">
                       {quickSuggestions.map((suggestion, index) => (
                         <button
                           key={index}
