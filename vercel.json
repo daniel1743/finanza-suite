@@ -135,9 +135,11 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/((?!assets|img|favicon|android|apple|site\\.webmanifest|robots\\.txt|sitemap\\.xml).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/app", "destination": "/index.html" },
+    { "source": "/app/(.*)", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/(.*)", "destination": "/index.html" },
+    { "source": "/((?!assets|img|favicon|android|apple|site\\.webmanifest|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
   ]
 }

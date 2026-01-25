@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import CategoryChart from '@/components/CategoryChart';
 import PersonalizedTips from '@/components/PersonalizedTips';
+import QuickExpenses from '@/components/QuickExpenses';
 // import PricingPlans from '@/components/PricingPlans'; // Eliminado - app 100% gratis
 
 
@@ -136,9 +137,15 @@ const Dashboard = ({ setCurrentView }) => {
           <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
             Inicio
           </h2>
-          <p className="text-muted-foreground mt-1">Visión general de tu salud financiera</p>
+          <p className="text-muted-foreground mt-1">Vision general de tu salud financiera</p>
         </div>
       </div>
+
+      {/* Gastos Rapidos - 1 tap */}
+      <Card className="p-4">
+        <QuickExpenses />
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <InfoCard 
           title="Saldo Total"
