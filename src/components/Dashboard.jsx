@@ -11,7 +11,8 @@ import {
 import CategoryChart from '@/components/CategoryChart';
 import PersonalizedTips from '@/components/PersonalizedTips';
 import QuickExpenses from '@/components/QuickExpenses';
-// import PricingPlans from '@/components/PricingPlans'; // Eliminado - app 100% gratis
+import RecurringImpact from '@/components/RecurringImpact';
+import FinancialWellness from '@/components/FinancialWellness';
 
 
 const LEISURE_CATEGORIES = ['Entretenimiento', 'Ocio'];
@@ -145,6 +146,12 @@ const Dashboard = ({ setCurrentView }) => {
       <Card className="p-4">
         <QuickExpenses />
       </Card>
+
+      {/* Recordatorios e Impacto de Gastos Fijos */}
+      <RecurringImpact />
+
+      {/* Bienestar Financiero - Salud y Proyecciones */}
+      <FinancialWellness />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <InfoCard 

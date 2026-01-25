@@ -23,6 +23,12 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import ConnectBanks from '@/components/ConnectBanks';
 import AIChatButton from '@/components/AIChatButton';
+import BudgetAlertSystem from '@/components/BudgetAlertSystem';
+import BudgetAdjustModal from '@/components/BudgetAdjustModal';
+import PinLock from '@/components/PinLock';
+import BackupReminder from '@/components/BackupReminder';
+import SecuritySettings from '@/components/SecuritySettings';
+import PrivacyPolicy from '@/components/PrivacyPolicy';
 
 // Admin Panel
 import {
@@ -41,6 +47,13 @@ function MainApp() {
   const [hidden, setHidden] = useState(false);
   const mainContentRef = useRef(null);
   const navigate = useNavigate();
+  const [adjustModalOpen, setAdjustModalOpen] = useState(false);
+  const [exceededAlert, setExceededAlert] = useState(null);
+
+  const handleOpenAdjustment = (alert) => {
+    setExceededAlert(alert);
+    setAdjustModalOpen(true);
+  };
 
   const { scrollY } = useScroll({ container: mainContentRef });
 
@@ -80,6 +93,17 @@ function MainApp() {
         return <Settings />;
       case 'connect_banks':
         return <ConnectBanks />;
+      case 'security':
+        return (
+          <div className="p-4 md:p-8">
+            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+              Seguridad y Privacidad
+            </h2>
+            <SecuritySettings />
+          </div>
+        );
+      case 'privacy':
+        return <PrivacyPolicy onBack={() => setCurrentView('security')} />;
       default:
         return <Dashboard setCurrentView={setCurrentView} />;
     }
@@ -139,6 +163,19 @@ function MainApp() {
         <FloatingActionButton hidden={hidden} />
       </div>
       {isMobile && <BottomNav currentView={currentView} setCurrentView={handleSetCurrentView} />}
+
+      {/* Sistema de Alertas Inteligentes */}
+      <BudgetAlertSystem onOpenAdjustment={handleOpenAdjustment} />
+
+      {/* Modal de Ajuste Rápido */}
+      <BudgetAdjustModal
+        isOpen={adjustModalOpen}
+        onClose={() => setAdjustModalOpen(false)}
+        exceededAlert={exceededAlert}
+      />
+
+      {/* Recordatorio de Backup */}
+      <BackupReminder />
     </>
   );
 }
@@ -232,7 +269,9 @@ function App() {
                   path="/app"
                   element={
                     <ProtectedRoute>
-                      <MainApp />
+                      <PinLock>
+                        <MainApp />
+                      </PinLock>
                     </ProtectedRoute>
                   }
                 />
@@ -240,7 +279,9 @@ function App() {
                   path="/app/*"
                   element={
                     <ProtectedRoute>
-                      <MainApp />
+                      <PinLock>
+                        <MainApp />
+                      </PinLock>
                     </ProtectedRoute>
                   }
                 />
@@ -286,6 +327,9 @@ function App() {
                     </AdminRoute>
                   }
                 />
+
+                {/* Página de Privacidad Pública */}
+                <Route path="/privacidad" element={<PrivacyPolicy />} />
 
                 {/* Fallback - Redirigir a landing */}
                 <Route path="*" element={<LandingPageWrapper />} />

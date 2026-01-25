@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, TrendingUp, TrendingDown, Trash2, User, UserPlus, PiggyBank, Landmark, Calendar, Filter, X } from 'lucide-react';
+import { Plus, Search, TrendingUp, TrendingDown, Trash2, User, UserPlus, PiggyBank, Landmark, Calendar, Filter, X, FileSpreadsheet } from 'lucide-react';
+import CSVImporter from '@/components/CSVImporter';
 import { useFinance } from '@/contexts/FinanceContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 const Records = () => {
   const { transactions, addTransaction, deleteTransaction, categories, addCategory, users, addUser, necessityLevels, addNecessityLevel } = useFinance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCSVImporterOpen, setIsCSVImporterOpen] = useState(false);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [showNewUserInput, setShowNewUserInput] = useState(false);
   const [showNewNecessityInput, setShowNewNecessityInput] = useState(false);
@@ -137,6 +139,7 @@ const Records = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={() => setIsDialogOpen(true)}>Registrar Gasto/Ingreso</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsCSVImporterOpen(true)}><FileSpreadsheet className="w-4 h-4 mr-2" />Importar CSV</DropdownMenuItem>
             <DropdownMenuItem onClick={handleNotImplemented}><PiggyBank className="w-4 h-4 mr-2" />Registrar Ahorro</DropdownMenuItem>
             <DropdownMenuItem onClick={handleNotImplemented}><Landmark className="w-4 h-4 mr-2" />Registrar Deuda</DropdownMenuItem>
             <DropdownMenuItem onClick={handleNotImplemented}><Calendar className="w-4 h-4 mr-2" />Próximos Pagos</DropdownMenuItem>
@@ -443,6 +446,12 @@ const Records = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Importador de CSV */}
+      <CSVImporter
+        isOpen={isCSVImporterOpen}
+        onClose={() => setIsCSVImporterOpen(false)}
+      />
     </div>
   );
 };

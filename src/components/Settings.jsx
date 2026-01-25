@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, User, Camera, Image, Pencil, Save, X } from 'lucide-react';
+import { Moon, Sun, User, Camera, Image, Pencil, Save, X, Shield, ChevronRight, FileText } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
@@ -240,10 +240,54 @@ const Settings = () => {
         </Card>
       </motion.div>
 
+      {/* Sección de Seguridad y Privacidad */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
+      >
+        <Card className="p-6">
+          <h3 className="text-xl font-bold mb-4">Seguridad y Privacidad</h3>
+          <div className="space-y-3">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'security' }))}
+              className="w-full flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-purple-500" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Configuración de Seguridad</p>
+                  <p className="text-sm text-muted-foreground">PIN, backup, exportar datos</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'privacy' }))}
+              className="w-full flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-blue-500" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Política de Privacidad</p>
+                  <p className="text-sm text-muted-foreground">Cómo protegemos tus datos</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
       >
         <Card className="p-6">
           <h3 className="text-xl font-bold mb-4">Acerca de Financia Suite</h3>
